@@ -17,7 +17,7 @@ yarn add nateritter/atrium-php
 
 Use the `atrium` module in your source code with the following
 ```php
-use Nateritter\AtriumPHP\AtriumClient
+use NateRitter\AtriumPHP\AtriumClient
 ```
 
 Then configure your instance with the following. (The `ENVIRONMENT` will be either `vestibule.mx.com` for the development environment or `atrium.mx.com` for the production environment.)
@@ -29,7 +29,7 @@ Then start using class methods to make calls to the Atrium API for data. See the
 
 ```php
 # use AtriumClient wrapper class
-use Nateritter\AtriumPHP\AtriumClient
+use NateRitter\AtriumPHP\AtriumClient
 
 # Configure AtriumClient
 $atriumClient = new AtriumClient("ENVIRONMENT", "YOUR_MX_API_KEY", "YOUR_MX_CLIENT_ID")
