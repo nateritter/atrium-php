@@ -10,6 +10,8 @@ namespace NateRitter\AtriumPHP\Models;
  **/
 class Connect
 {
+    public $connect_widget_url;
+    public $guid;
 
     /**
      * Constructor
@@ -17,6 +19,7 @@ class Connect
      */
     public function __construct(array $response)
     {
-        //
+        $this->connect_widget_url = $responsep['connect_widget_url'];
+        $this->guid = $responsep['guid'];
     }
 }

@@ -10,6 +10,10 @@ namespace NateRitter\AtriumPHP\Models;
  **/
 class User
 {
+    public $guid;
+    public $identifier;
+    public $is_disabled;
+    public $metadata;
 
     /**
      * Constructor
@@ -17,6 +21,9 @@ class User
      */
     public function __construct(array $response)
     {
-        //
+        $this->guid = $response['guid'];
+        $this->identifier = $response['identifier'];
+        $this->is_disabled = $response['is_disabled'];
+        $this->metadata = $response['metadata'];
     }
 }
