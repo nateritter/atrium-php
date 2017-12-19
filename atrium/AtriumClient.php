@@ -2,6 +2,16 @@
 
 namespace NateRitter\AtriumPHP;
 
+use GuzzleHttp\Client;
+use NateRitter\AtriumPHP\Models\User;
+use NateRitter\AtriumPHP\Models\Member;
+use NateRitter\AtriumPHP\Models\Account;
+use NateRitter\AtriumPHP\Models\Connect;
+use NateRitter\AtriumPHP\Models\Challenge;
+use NateRitter\AtriumPHP\Models\Credential;
+use NateRitter\AtriumPHP\Models\Institution;
+use NateRitter\AtriumPHP\Models\Transaction;
+
 /**
  * Atrium PHP Primary class
  *
