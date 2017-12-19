@@ -9,16 +9,26 @@
     "license": "MIT",
     "type": "project",
     "require": {
-        "php": ">=7.0.0"
+        "php": ">=7.0.0",
+        "guzzlehttp/guzzle": "^6.3",
+        "vlucas/phpdotenv": "^2.4"
     },
     "require-dev": {
         "fzaninotto/faker": "~1.4",
         "mockery/mockery": "0.9.*",
         "phpunit/phpunit": "~6.0"
     },
+    "autoload": {
+        "psr-4": {
+            "NateRitter\\AtriumPHP\\": "atrium/"
+        }
+    },
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/"
         }
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit"
     }
 }
