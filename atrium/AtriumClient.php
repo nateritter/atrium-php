@@ -52,6 +52,187 @@ class AtriumClient
         $this->mx_client_id = $mx_client_id;
     }
 
+    /**
+     * List created members
+     * @param  string $userGUID
+     * @param  string $page
+     * @param  string $records_per_page
+     * @return array
+     */
+    public function listMembers($userGUID, $page = '', $records_per_page = '')
+    {
+        $params = $this->optionalParameters('', '', '', $page, $records_per_page);
+
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/members' . $params, []);
+        $parsedJSON = json_decode($response);
+        $JSONArray = (array) $parsedJSON->members;
+        $members = [];
+
+        foreach ($JSONArray as $member) {
+            $members[] = new Member((array) $member);
+        }
+
+        return $members;
+    }
+
+    /**
+     * Delete a member by their GUID
+     * @param  string $userGUID
+     * @param  string $memberGUID
+     * @return string             JSON encoded string
+     */
+    public function deleteMember($userGUID, $memberGUID)
+    {
+        return $this->makeRequest('DELETE', '/users/' . $userGUID . '/members/' . $memberGUID, []);
+    }
+
+    /**
+     * Update a member
+     * @param  string  $userGUID
+     * @param  string  $memberGUID
+     * @param  string  $identifier
+     * @param  string  $metadata     JSON encoded string
+     * @return \NateRitter\AtriumPHP\Models\Member
+     */
+    public function updateMember(
+        $userGUID,
+        $memberGUID,
+        $identifier = '',
+        $credentials = '',
+        $metadata = ''
+    )
+    {
+        $inner = [];
+
+        if ($identifier != '') {
+            $inner['identifier'] = $identifier;
+        }
+
+        if ($credentials != '') {
+            $inner['credentials'] = $credentials;
+        }
+
+        if ($metadata !== '') {
+            $inner['metadata'] = json_encode($metadata);
+        }
+
+        $outer['member'] = $inner;
+
+        $response = $this->makeRequest('PUT', '/users/' . $userGUID . '/members/' . $memberGUID, $outer);
+        $response = json_decode($response);
+
+        return new Member((array) $response->member);
+    }
+
+    /**
+     * Read the user's member
+     * @param  string $userGUID
+     * @param  string $memberGUID
+     * @return \NateRitter\AtriumPHP\Models\Member
+     */
+    public function readMember($userGUID, $memberGUID)
+    {
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/members/' . $memberGUID, []);
+        return new Member((array) json_decode($response)->member);
+    }
+
+    public function createMember(
+        $userGUID,
+        $credentials,
+        $institutionCode,
+        $identifier = '',
+        $metadata = ''
+    )
+    {
+        $inner = [];
+        $inner['institution_code'] = $institutionCode;
+        $inner['credentials'] = $credentials;
+
+        if ($identifier != '') {
+            $inner['identifier'] = $identifier;
+        }
+
+        if ($metadata !== '') {
+            $inner['metadata'] = json_encode($metadata);
+        }
+
+        $outer['member'] = $inner;
+
+        $response = $this->makeRequest('POST', '/users/' . $userGUID . '/members', $outer);
+        $response = json_decode($response);
+
+        return new Member((array) $response->member);
+    }
+
+    /**
+     * Read Institution Credentials
+     * @param  string $institutionCode
+     * @param  string $page
+     * @param  string $records_per_page
+     * @return \NateRitter\AtriumPHP\Models\Credential
+     */
+    public function readInstitutionCredentials(
+        $institutionCode,
+        $page = '',
+        $records_per_page = ''
+    )
+    {
+        $params = $this->optionalParameters('', '', '', $page, $records_per_page);
+
+        $response = $this->makeRequest('GET', '/institutions/' . $institutionCode . '/credentials' . $params, []);
+        $parsedJSON = json_decode($response);
+        $JSONArray = (array) $parsedJSON->credentials;
+        $credentials = [];
+
+        foreach ($JSONArray as $credential) {
+            $credentials[] = new Credential((array) $credential);
+        }
+
+        return $credentials;
+    }
+
+    /**
+     * Read a specific institution
+     * @param  string $institutionCode
+     * @return \NateRitter\AtriumPHP\Models\Institution
+     */
+    public function readInstitution($institutionCode)
+    {
+        $response = $this->makeRequest('GET', '/institutions/' . $institutionCode, []);
+        return new Institution((array) json_decode($response)->institution);
+    }
+
+    /**
+     * List the institutions available
+     * @param  string $name
+     * @param  string $page
+     * @param  string $records_per_page
+     * @return array
+     */
+    public function listInstitutions($name = '', $page = '', $records_per_page = '')
+    {
+        $params = $this->optionalParameters($name, '', '', $page, $records_per_page);
+
+        $response = $this->makeRequest('GET', '/institutions' . $params, []);
+        $parsedJSON = json_decode($response);
+        $JSONArray = (array) $parsedJSON->institutions;
+        $institutions = [];
+
+        foreach ($JSONArray as $institution) {
+            $institutions[] = new Institution((array) $institution);
+        }
+
+        return $institutions;
+    }
+
+    /**
+     * Update a user
+     * @param  string  $userGUID
+     * @param  string  $identifier
+     * @param  boolean $is_disabled
+     * @param  string  $metadata     JSON encoded string
+     * @return \NateRitter\AtriumPHP\Models\User
+     */
     public function updateUser(
         $userGUID,
         $identifier = '',

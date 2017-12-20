@@ -29,7 +29,7 @@ class AtriumClientTest extends TestCase
     }
 
     public function tearDown() {
-        // Delete any users that were created
+        // Delete any created users (which will delete any associated members)
         $users = $this->client->listUsers(1, 1000);
         foreach ($users as $user) {
             $this->client->deleteUser($user->guid);
@@ -70,7 +70,9 @@ class AtriumClientTest extends TestCase
         $createdUser = $this->testCreateUser();
 
         $result = $this->client->readUser($createdUser->guid);
+
         $this->assertNotNull($result->guid);
+        $this->assertEquals($result->guid, $createdUser->guid);
     }
 
     public function testUpdateUser()
@@ -105,7 +107,7 @@ class AtriumClientTest extends TestCase
 
     public function testListUsers()
     {
-        $num = $this->faker->numberBetween(1, 10);
+        $num = $this->faker->numberBetween(1, 3);
 
         for ($i=0; $i < $num; $i++) {
             $this->testCreateUser();
@@ -125,49 +127,164 @@ class AtriumClientTest extends TestCase
         $this->assertEmpty($result);
     }
 
-    // # INSTITUTION
+    # INSTITUTION
 
-    // public function testListInstitution()
-    // {
-    //     //
-    // }
+    public function testListInstitutions()
+    {
+        $institutions = $this->client->listInstitutions();
 
-    // public function testReadInstitution()
-    // {
-    //     //
-    // }
+        $this->assertCount(15, $institutions);
+    }
 
-    // public function testReadInstitutionCredentials()
-    // {
-    //     //
-    // }
+    public function testReadInstitution()
+    {
+        $institutions = $this->client->listInstitutions();
+
+        $institution = $this->client->readInstitution($institutions[0]->code);
+
+        $this->assertEquals($institutions[0]->code, $institution->code);
+    }
+
+    public function testReadInstitutionCredentials()
+    {
+        $institutions = $this->client->listInstitutions();
+
+        $credentials = $this->client->readInstitutionCredentials(
+            $institutions[0]->code
+        );
+
+        $this->assertNotEmpty($credentials);
+        $this->assertGreaterThan(1, count($credentials));
+        $this->assertEquals(\NateRitter\AtriumPHP\Models\Credential::class, get_class($credentials[0]));
+        $this->assertObjectHasAttribute('field_name', $credentials[0]);
+        $this->assertObjectHasAttribute('guid', $credentials[0]);
+        $this->assertObjectHasAttribute('label', $credentials[0]);
+        $this->assertObjectHasAttribute('type', $credentials[0]);
+    }
 
     // # MEMBER
 
-    // public function testCreateMember()
-    // {
-    //     //
-    // }
+    public function testCreateMember()
+    {
+        $identifier = ''; // Don't want collissions with already created users/members
+        $is_disabled = false;
+        $userMetadata = [
+            'first_name' => $this->faker->firstName,
+            'last_name' => $this->faker->lastName,
+        ];
 
-    // public function testReadMember()
-    // {
-    //     //
-    // }
+        $user = $this->client->createUser($identifier, $is_disabled, $userMetadata);
 
-    // public function testUpdateMember()
-    // {
-    //     //
-    // }
+        $institution = $this->client->listInstitutions()[0];
 
-    // public function testDeleteMember()
-    // {
-    //     //
-    // }
+        $credentials = $this->client->readInstitutionCredentials($institution->code);
+        $institutionCredentials = [];
 
-    // public function testListMembers()
-    // {
-    //     //
-    // }
+        foreach ($credentials as $credential) {
+
+            // Set value
+            $credential->value = strtolower($credential->label);
+
+            // Unset unpermitted fields
+            unset($credential->field_name);
+            unset($credential->label);
+            unset($credential->type);
+
+            $institutionCredentials[] = $credential;
+        }
+
+        $memberMetadata = ['credentials_last_refreshed_at' => $this->faker->date];
+
+        $result = $this->client->createMember(
+            $user->guid,
+            $credentials,
+            $institution->code,
+            $identifier,
+            $memberMetadata
+        );
+
+        $this->assertNotNull($result->guid);
+        $this->assertNotNull($result->institution_code);
+        $this->assertNotNull($result->is_being_aggregated);
+        $this->assertNotNull($result->name);
+        $this->assertNotNull($result->status);
+        $this->assertNotNull($result->user_guid);
+        $this->assertEquals($user->guid, $result->user_guid);
+
+        return $result;
+    }
+
+    public function testReadMember()
+    {
+        $createdMember = $this->testCreateMember();
+
+        $result = $this->client->readMember($createdMember->user_guid, $createdMember->guid);
+
+        $this->assertNotNull($result->guid);
+        $this->assertEquals($result->guid, $createdMember->guid);
+    }
+
+    public function testUpdateMember()
+    {
+        $createdMember = $this->testCreateMember();
+
+        $credentialsLastRefreshedAt = $this->faker->date;
+        $modifiedMember = $createdMember;
+        $modifiedMember->metadata = json_encode([
+            'credentials_last_refreshed_at' => $credentialsLastRefreshedAt,
+        ]);
+
+        $institution = $this->client->listInstitutions()[0];
+
+        $credentials = $this->client->readInstitutionCredentials($institution->code);
+        $institutionCredentials = [];
+
+        foreach ($credentials as $credential) {
+
+            // Set value
+            $credential->value = strtolower($credential->label);
+
+            // Unset unpermitted fields
+            unset($credential->field_name);
+            unset($credential->label);
+            unset($credential->type);
+
+            $institutionCredentials[] = $credential;
+        }
+
+        $result = $this->client->updateMember(
+            $createdMember->user_guid,
+            $createdMember->guid,
+            $createdMember->identifier,
+            $institutionCredentials,
+            $modifiedMember->metadata
+        );
+
+        $decodedMetadata = json_decode($modifiedMember->metadata);
+
+        $this->assertEquals($createdMember->user_guid, $result->user_guid);
+        $this->assertEquals($createdMember->identifier, $result->identifier);
+        $this->assertNotEquals($createdMember->metadata, $result->metadata);
+        $this->assertEquals($decodedMetadata->credentials_last_refreshed_at, $credentialsLastRefreshedAt);
+    }
+
+    public function testDeleteMember()
+    {
+        $member = $this->testCreateMember();
+
+        $result = $this->client->deleteMember($member->user_guid, $member->guid);
+
+        $this->assertEmpty($result);
+    }
+
+    public function testListMembers()
+    {
+        $member = $this->testCreateMember();
+
+        $members = $this->client->listMembers($member->user_guid);
+
+        $this->assertCount(1, $members);
+    }
 
     // public function testAggregateMember()
     // {
@@ -220,6 +337,8 @@ class AtriumClientTest extends TestCase
     // {
     //     //
     // }
+
+    // # TRANSACTION
 
     // public function testReadTransaction()
     // {
