@@ -14,6 +14,7 @@ class User
     public $identifier;
     public $is_disabled;
     public $metadata;
+    public $connect_widget_url;
 
     /**
      * Constructor
@@ -22,8 +23,9 @@ class User
     public function __construct(array $response)
     {
         $this->guid = $response['guid'];
-        $this->identifier = $response['identifier'];
-        $this->is_disabled = $response['is_disabled'];
-        $this->metadata = $response['metadata'];
+        $this->identifier = (isset($response['identifier'])) ? $response['identifier'] : null;
+        $this->is_disabled = (isset($response['is_disabled'])) ? $response['is_disabled'] : false;
+        $this->metadata = (isset($response['metadata'])) ? $response['metadata'] : null;
+        $this->connect_widget_url = (isset($response['connect_widget_url'])) ? $response['connect_widget_url'] : null;
     }
 }

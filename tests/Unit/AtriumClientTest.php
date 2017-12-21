@@ -286,83 +286,169 @@ class AtriumClientTest extends TestCase
         $this->assertCount(1, $members);
     }
 
-    // public function testAggregateMember()
-    // {
-    //     //
-    // }
+    public function testAggregateMember()
+    {
+        $member = $this->testCreateMember();
 
-    // public function testReadMemberAggregationStatus()
-    // {
-    //     //
-    // }
+        $aggregatedMember = $this->client->aggregateMember(
+            $member->user_guid,
+            $member->guid
+        );
 
-    // public function testListMemberMFAChallenges()
-    // {
-    //     //
-    // }
+        $this->assertEquals($aggregatedMember->guid, $member->guid);
+        $this->assertEquals($aggregatedMember->metadata, $member->metadata);
+        $this->assertTrue($aggregatedMember->is_being_aggregated);
 
-    // public function testResumeMemberAggregation()
-    // {
-    //     //
-    // }
+        return $member;
+    }
 
-    // public function testListMemberCredentials()
-    // {
-    //     //
-    // }
+    public function testReadMemberAggregationStatus()
+    {
+        $member = $this->testAggregateMember();
 
-    // public function testListMemberAccounts()
-    // {
-    //     //
-    // }
+        $result = $this->client->readMemberAggregationStatus(
+            $member->user_guid,
+            $member->guid
+        );
 
-    // public function testListMemberTransactions()
-    // {
-    //     //
-    // }
+        $this->assertEquals($result->guid, $member->guid);
+    }
+
+    public function testListMemberMFAChallenges()
+    {
+        $member = $this->testCreateMember();
+
+        // Unchallenged member
+        $challenges = $this->client->listMemberMFAChallenges(
+            $member->user_guid,
+            $member->guid
+        );
+
+        $this->assertCount(0, $challenges);
+    }
+
+    public function testResumeMemberAggregation()
+    {
+        $this->markTestSkipped(
+            'Skipping resuming member aggregation since we are not testing a challenged member.'
+        );
+    }
+
+    public function testListMemberCredentials()
+    {
+        $member = $this->testCreateMember();
+
+        $credentials = $this->client->listMemberCredentials(
+            $member->user_guid,
+            $member->guid
+        );
+
+        $this->assertCount(2, $credentials);
+        $this->assertEquals(\NateRitter\AtriumPHP\Models\Credential::class, get_class($credentials[0]));
+    }
+
+    public function testListMemberAccounts()
+    {
+        $member = $this->testCreateMember();
+
+        // Unlinked user/member
+        $accounts = $this->client->listMemberAccounts(
+            $member->user_guid,
+            $member->guid
+        );
+
+        $this->assertCount(0, $accounts);
+    }
+
+    public function testListMemberTransactions()
+    {
+        $member = $this->testCreateMember();
+
+        // Unlinked user/member
+        $transactions = $this->client->listMemberTransactions(
+            $member->user_guid,
+            $member->guid
+        );
+
+        $this->assertCount(0, $transactions);
+    }
 
     // # ACCOUNT
 
-    // public function testReadAccount()
-    // {
-    //     //
-    // }
+    public function testReadAccount()
+    {
+        $this->markTestSkipped(
+            'Skipping reading an account since we do not connect them in tests.'
+        );
+    }
 
-    // public function testListAccounts()
-    // {
-    //     //
-    // }
+    public function testListAccounts()
+    {
+        $identifier = ''; // Don't want collissions with already created users/members
+        $is_disabled = false;
+        $userMetadata = [
+            'first_name' => $this->faker->firstName,
+            'last_name' => $this->faker->lastName,
+        ];
 
-    // public function testListAccountTransactions()
-    // {
-    //     //
-    // }
+        $user = $this->client->createUser($identifier, $is_disabled, $userMetadata);
+
+        // No linked accounts yet
+        $accounts = $this->client->listAccounts($user->guid);
+
+        $this->assertEmpty($accounts);
+    }
+
+    public function testListAccountTransactions()
+    {
+        $this->markTestSkipped(
+            'Skipping account transaction list since we do not connect accounts in tests.'
+        );
+    }
 
     // # TRANSACTION
 
-    // public function testReadTransaction()
-    // {
-    //     //
-    // }
+    public function testReadTransaction()
+    {
+        $this->markTestSkipped(
+            'Skipping reading a transaction since we do not connect accounts in tests.'
+        );
+    }
 
-    // public function testListTransactions()
-    // {
-    //     //
-    // }
+    public function testListTransactions()
+    {
+        $this->markTestSkipped(
+            'Skipping listing transactions since we do not connect accounts in tests.'
+        );
+    }
 
     // # CONNECT WIDGET
 
-    // public function testCreateWidget()
-    // {
-    //     //
-    // }
+    public function testCreateWidget()
+    {
+        $identifier = ''; // Don't want collissions with already created users/members
+        $is_disabled = false;
+        $userMetadata = [
+            'first_name' => $this->faker->firstName,
+            'last_name' => $this->faker->lastName,
+        ];
+
+        $user = $this->client->createUser($identifier, $is_disabled, $userMetadata);
+
+        $widget = $this->client->createWidget($user->guid);
+
+        $this->assertEquals($user->guid, $widget->guid);
+        $this->assertNotEmpty($widget->connect_widget_url);
+    }
 
     // # CLIENT
 
-    // public function testTestMakeRequest()
-    // {
-    //     //
-    // }
+    public function testTestMakeRequest()
+    {
+        $this->markTestSkipped(
+            'Skipping connection request method. If all other tests pass, this obviously does too.'
+        );
+    }
 
     public function testHttpError()
     {

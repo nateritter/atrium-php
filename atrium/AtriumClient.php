@@ -53,6 +53,400 @@ class AtriumClient
     }
 
     /**
+     * This endpoint will return a URL for an embeddable version of MX Connect.
+     * @param  string $userGUID
+     * @return \NateRitter\AtriumPHP\Models\User
+     */
+    public function createWidget($userGUID)
+    {
+        $response = $this->makeRequest('POST', '/users/' . $userGUID . '/connect_widget_url', []);
+        $response = json_decode($response);
+
+        return new User((array) $response->user);
+    }
+
+    /**
+     * Use this endpoint to get all transactions that belong to a specific
+     * user, across all the user's members and accounts.
+     *
+     * This endpoint accepts optional query parameters, from_date and to_date,
+     * which filter transactions according to the date they were posted. If no
+     * values are given, from_date will default to 90 days prior to the request,
+     * and to_date will default to 5 days from the time of the request.
+     *
+     * @param  string $userGUID
+     * @param  string $from_date
+     * @param  string $to_date
+     * @param  string $page
+     * @param  string $records_per_page
+     * @return array
+     */
+    public function listTransactions(
+        $userGUID,
+        $from_date = '',
+        $to_date = '',
+        $page = '',
+        $records_per_page = ''
+    )
+    {
+        $params = $this->optionalParameters(
+            '',
+            $from_date,
+            $to_date,
+            $page,
+            $records_per_page
+        );
+
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/transactions' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
+        $parsedJSON = json_decode($response);
+        $JSONArray = (array) $parsedJSON->transactions;
+        $transactions = [];
+
+        foreach ($JSONArray as $transaction) {
+            $transactions[] = new Transaction((array) $transaction);
+        }
+
+        return $transactions;
+    }
+
+    /**
+     * This endpoint allows you to view information about a specific
+     * transaction that belongs to a user.
+     * @param  string $userGUID
+     * @param  string $transactionGUID
+     * @return \NateRitter\AtriumPHP\Models\Transaction
+     */
+    public function readTransaction($userGUID, $transactionGUID)
+    {
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/transactions/' . $transactionGUID, []);
+        return new Transaction((array) json_decode($response)->transaction);
+    }
+
+    /**
+     * This endpoint allows you to see every transaction that belongs to a
+     * specific account. The default from_date is 90 days prior to the request,
+     * and the default to_date is 5 days from the time of the request.
+     *
+     * The from_date and to_date parameters can optionally be appended to
+     * the request.
+     *
+     * @param  string $userGUID
+     * @param  string $accountGUID
+     * @param  string $from_date
+     * @param  string $to_date
+     * @param  string $page
+     * @param  string $records_per_page
+     * @return array
+     */
+    public function listAccountTransactions(
+        $userGUID,
+        $accountGUID,
+        $from_date = '',
+        $to_date = '',
+        $page = '',
+        $records_per_page = ''
+    )
+    {
+        $params = $this->optionalParameters(
+            '',
+            $from_date,
+            $to_date,
+            $page,
+            $records_per_page
+        );
+
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/accounts/' . $accountGUID . '/transactions' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
+        $parsedJSON = json_decode($response);
+        $JSONArray = (array) $parsedJSON->transactions;
+        $transactions = [];
+
+        foreach ($JSONArray as $transaction) {
+            $transactions[] = new Transaction((array) $transaction);
+        }
+
+        return $transactions;
+    }
+
+    /**
+     * Use this endpoint to view information about every account that belongs
+     * to a user. You'll need the user's GUID to access this list. The
+     * information will include the account type — e.g., CHECKING,
+     * MONEY_MARKET, or PROPERTY — the account balance, the date the
+     * account was started, etc.
+     *
+     * @param  string $userGUID
+     * @param  string $page
+     * @param  string $records_per_page
+     * @return array
+     */
+    public function listAccounts($userGUID, $page = '', $records_per_page = '')
+    {
+        $params = $this->optionalParameters('', '', '', $page, $records_per_page);
+
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/accounts' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
+        $parsedJSON = json_decode($response);
+        $JSONArray = (array) $parsedJSON->accounts;
+        $accounts = [];
+
+        foreach ($JSONArray as $account) {
+            $accounts[] = new Account((array) $account);
+        }
+
+        return $accounts;
+    }
+
+    /**
+     * Reading an account allows you to get information about a specific account that belongs to a user. That includes the account type — e.g., CHECKING, MONEY_MARKET, or PROPERTY — the balance, the date the account was started, and much more.
+     * @param  string $userGUID
+     * @param  string $accountGUID
+     * @return \NateRitter\AtriumPHP\Models\Account
+     */
+    public function readAccount($userGUID, $accountGUID)
+    {
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/accounts/' . $accountGUID, []);
+        return new Account((array) json_decode($response)->account);
+    }
+
+    /**
+     * Use this endpoint to get all transactions from all accounts associated
+     * with a specific member.
+     *
+     * This endpoint accepts optional URL query parameters — from_date and
+     * to_date — which are used to filter transactions according to the
+     * date they were posted. If no values are given for the query parameters,
+     * from_date will default to 90 days prior to the request and to_date
+     * will default to 5 days from the time of the request.
+     *
+     * @param  string $userGUID
+     * @param  string $memberGUID
+     * @param  string $from_date
+     * @param  string $to_date
+     * @param  string $page
+     * @param  string $records_per_page
+     * @return array
+     */
+    public function listMemberTransactions(
+        $userGUID,
+        $memberGUID,
+        $from_date = '',
+        $to_date = '',
+        $page = '',
+        $records_per_page = ''
+    )
+    {
+        $params = $this->optionalParameters('', $from_date, $to_date, $page, $records_per_page);
+
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/members/' . $memberGUID . '/transactions' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
+        $parsedJSON = json_decode($response);
+        $JSONArray = (array) $parsedJSON->transactions;
+        $transactions = [];
+
+        foreach ($JSONArray as $transaction) {
+            $transactions[] = new Transaction((array) $transaction);
+        }
+
+        return $transactions;
+    }
+
+    /**
+     * This endpoint returns an array with information about every account
+     * associated with a particular member.
+     *
+     * @param  string $userGUID
+     * @param  string $memberGUID
+     * @param  string $page
+     * @param  string $records_per_page
+     * @return array
+     */
+    public function listMemberAccounts(
+        $userGUID,
+        $memberGUID,
+        $page = '',
+        $records_per_page = ''
+    )
+    {
+        $params = $this->optionalParameters('', '', '', $page, $records_per_page);
+
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/members/' . $memberGUID . '/accounts' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
+        $parsedJSON = json_decode($response);
+        $JSONArray = (array) $parsedJSON->accounts;
+        $accounts = [];
+
+        foreach ($JSONArray as $account) {
+            $accounts[] = new Account((array) $account);
+        }
+
+        return $accounts;
+    }
+
+    /**
+     * This endpoint returns an array which contains information on every
+     * non-MFA credential associated with a specific member.
+     *
+     * @param  string $userGUID
+     * @param  string $memberGUID
+     * @param  string $page
+     * @param  string $records_per_page
+     * @return array
+     */
+    public function listMemberCredentials(
+        $userGUID,
+        $memberGUID,
+        $page = '',
+        $records_per_page = ''
+    )
+    {
+        $params = $this->optionalParameters('', '', '', $page, $records_per_page);
+
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/members/' . $memberGUID . '/credentials' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
+        $parsedJSON = json_decode($response);
+        $JSONArray = (array) $parsedJSON->credentials;
+        $credentials = [];
+
+        foreach ($JSONArray as $credential) {
+            $credentials[] = new Credential((array) $credential);
+        }
+
+        return $credentials;
+    }
+
+    /**
+     * This endpoint answers the challenges needed when a member has been
+     * challenged by multi-factor authentication.
+     *
+     * Only a member with connection status CHALLENGED can be resumed using
+     * this endpoint.
+     *
+     * @param  string $userGUID
+     * @param  string $memberGUID
+     * @param  array  $answers    MFA Answers including 'guid' and 'value' for each challenge
+     * @return \NateRitter\AtriumPHP\Models\Member
+     */
+    public function resumeMemberAggregation($userGUID, $memberGUID, $answers)
+    {
+        $inner = [];
+        $inner['challenges'] = $answers;
+        $outer['member'] = $inner;
+
+        $response = $this->makeRequest('PUT', '/users/' . $userGUID . '/members/' . $memberGUID . '/resume', $outer);
+        $response = json_decode($response);
+
+        return new Member((array) $response->member);
+    }
+
+    /**
+     * Use this endpoint for information on what multi-factor authentication
+     * challenges need to be answered in order to aggregate a member.
+     *
+     * If the aggregation is not challenged, i.e., the member does not have a
+     * connection status of CHALLENGED, then code 204 No Content will be
+     * returned.
+     *
+     * If the aggregation has been challenged, i.e., the member does have a
+     * connection status of CHALLENGED, then code 200 OK will be returned —
+     * along with the corresponding credentials.
+     *
+     * @param  string $userGUID
+     * @param  string $memberGUID
+     * @param  string $page
+     * @param  string $records_per_page
+     * @return array
+     */
+    public function listMemberMFAChallenges(
+        $userGUID,
+        $memberGUID,
+        $page = '',
+        $records_per_page = ''
+    )
+    {
+        $params = $this->optionalParameters('', '', '', $page, $records_per_page);
+
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/members/' . $memberGUID . '/challenges' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
+        $parsedJSON = json_decode($response);
+        $JSONArray = (array) $parsedJSON->challenges;
+        $challenges = [];
+
+        foreach ($JSONArray as $challenge) {
+            $challenges[] = new Challenge((array) $challenge);
+        }
+
+        return $challenges;
+    }
+
+    /**
+     * This endpoint provides the status of the member's most recent aggregation
+     * event. This is an important step in the aggregation process, and the
+     * results returned by this endpoint should determine what you do next
+     * in order to successfully aggregate a member.
+     *
+     * Member connection statuses should be used in conjunction with the
+     * is_being_aggregated field described above. When is_being_aggregated
+     * switches from true to false and the value of connection_status is
+     * CONNECTED, you can stop polling the status and list the member's
+     * transactions or list the transactions for a specific account.
+     *
+     * @param  string $userGUID
+     * @param  string $memberGUID
+     * @return \NateRitter\AtriumPHP\Models\Member
+     */
+    public function readMemberAggregationStatus($userGUID, $memberGUID)
+    {
+        $response = $this->makeRequest('GET', '/users/' . $userGUID . '/members/' . $memberGUID . '/status', []);
+        return new Member((array) json_decode($response)->member);
+    }
+
+    /**
+     * Calling this endpoint initiates an aggregation event for the member.
+     * This brings in the latest account and transaction data from the
+     * connected institution. If this data has recently been updated, MX may
+     * not initiate an aggregation event.
+     *
+     * @param  string $userGUID
+     * @param  string $memberGUID
+     * @return \NateRitter\AtriumPHP\Models\Member
+     */
+    public function aggregateMember($userGUID, $memberGUID)
+    {
+        $response = $this->makeRequest('POST', '/users/' . $userGUID . '/members/' . $memberGUID . '/aggregate', []);
+        return new Member((array) json_decode($response)->member);
+    }
+
+    /**
      * List created members
      * @param  string $userGUID
      * @param  string $page
@@ -64,6 +458,11 @@ class AtriumClient
         $params = $this->optionalParameters('', '', '', $page, $records_per_page);
 
         $response = $this->makeRequest('GET', '/users/' . $userGUID . '/members' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
         $parsedJSON = json_decode($response);
         $JSONArray = (array) $parsedJSON->members;
         $members = [];
@@ -180,6 +579,11 @@ class AtriumClient
         $params = $this->optionalParameters('', '', '', $page, $records_per_page);
 
         $response = $this->makeRequest('GET', '/institutions/' . $institutionCode . '/credentials' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
         $parsedJSON = json_decode($response);
         $JSONArray = (array) $parsedJSON->credentials;
         $credentials = [];
@@ -214,6 +618,11 @@ class AtriumClient
         $params = $this->optionalParameters($name, '', '', $page, $records_per_page);
 
         $response = $this->makeRequest('GET', '/institutions' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
         $parsedJSON = json_decode($response);
         $JSONArray = (array) $parsedJSON->institutions;
         $institutions = [];
@@ -296,6 +705,11 @@ class AtriumClient
         $params = $this->optionalParameters('', '', '', $page, $records_per_page);
 
         $response = $this->makeRequest('GET', '/users' . $params, []);
+
+        if (empty($response)) {
+            return [];
+        }
+
         $parsedJSON = json_decode($response);
         $JSONArray = (array) $parsedJSON->users;
         $users = [];
