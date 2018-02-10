@@ -11,8 +11,9 @@ namespace NateRitter\AtriumPHP\Models;
 class Transaction
 {
     public $account_guid;
+    public $amount;
     public $category;
-    public $check_number;
+    public $check_number_string;
     public $created_at;
     public $date;
     public $description;
@@ -45,8 +46,9 @@ class Transaction
     public function __construct(array $response)
     {
         $this->account_guid = $response['account_guid'];
+        $this->amount = $response['amount'];
         $this->category = $response['category'];
-        $this->check_number = $response['check_number'];
+        $this->check_number_string = $response['check_number_string'];
         $this->created_at = $response['created_at'];
         $this->date = $response['date'];
         $this->description = $response['description'];

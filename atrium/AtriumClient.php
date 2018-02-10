@@ -535,6 +535,15 @@ class AtriumClient
         return new Member((array) json_decode($response)->member);
     }
 
+    /**
+     * Create a user's member
+     * @param  string $userGUID
+     * @param  array  $credentials
+     * @param  string $institutionCode
+     * @param  string $identifier
+     * @param  string $metadata
+     * @return \NateRitter\AtriumPHP\Models\Member
+     */
     public function createMember(
         $userGUID,
         $credentials,
