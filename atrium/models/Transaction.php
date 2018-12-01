@@ -30,6 +30,7 @@ class Transaction
     public $member_guid;
     public $memo;
     public $merchant_category_code;
+    public $merchant_guid;
     public $original_description;
     public $posted_at;
     public $status;
@@ -65,6 +66,7 @@ class Transaction
         $this->member_guid = $response['member_guid'];
         $this->memo = $response['memo'];
         $this->merchant_category_code = $response['merchant_category_code'];
+        $this->merchant_guid = $response['merchant_guid'];
         $this->original_description = $response['original_description'];
         $this->posted_at = $response['posted_at'];
         $this->status = $response['status'];
